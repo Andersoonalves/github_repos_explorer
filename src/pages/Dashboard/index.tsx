@@ -1,39 +1,60 @@
-import React from 'react';
-
+import React, { useState, FormEvent } from 'react';
 import {FiChevronRight} from 'react-icons/fi'
-
 import { Title, Form , Repositories} from './styles';
 import logImg from '../../assets/logo.svg';
 import { format } from 'path';
+import api from '../../services/api';
+
+interface Repository {
+    full_name: string;
+    description: string;
+    owner: {
+        login: string;
+        avatar_url: string;
+    }
+}
 
 const Dashboard: React.FC = () => {
+    const [newRepo, setnewRepo] = useState('');
+    const [repositories, setRepositories] = useState<Repository[]>([]);
+
+    async function handleAddRepository(event: FormEvent<HTMLFormElement>): Promise<void> {
+        event.preventDefault();
+
+
+        const response = await api.get<Repository>(`repos/${newRepo}`);
+        console.log(response.data);
+        const repository = response.data;
+
+        setRepositories([...repositories, repository]);
+        setnewRepo('');
+    }
+
     return (
         <>
             <img src={logImg} alt="Github Explorer"/>
             <Title>Explore repositories on Github.</Title>
-            <Form>
-                <input type="text" placeholder="Repository Name"/>
+            <Form onSubmit={handleAddRepository}>
+                <input
+                    value={newRepo}
+                    onChange={(e) => setnewRepo(e.target.value)}
+                    type="text" placeholder="Repository Name"/>
                 <button type="submit">Search</button>
             </Form>
             <Repositories>
-                <a href="tet">
-                    <img src="https://avatars1.githubusercontent.com/u/1179700?s=460&u=46e09e5a89df69d85edd5dfed79ddea89298ed1d&v=4" alt="teste"/>
-                    <div>
-                        <strong>Andersoonalves/node-base-project</strong>
-                        <p>NodeJS Base Project</p>
-                    </div>
+                {repositories.map((repository) => (
+                    <a key={repository.full_name} href="teste">
+                        <img src={repository.owner.avatar_url} alt={repository.owner.login}/>
+                        <div>
+                            <strong>{repository.full_name}</strong>
+                            <p>{repository.description}</p>
+                        </div>
 
-                    <FiChevronRight size={20}/>
-                </a>
-                <a href="tet">
-                    <img src="https://avatars1.githubusercontent.com/u/1179700?s=460&u=46e09e5a89df69d85edd5dfed79ddea89298ed1d&v=4" alt="teste"/>
-                    <div>
-                        <strong>Andersoonalves/node-base-project</strong>
-                        <p>NodeJS Base Project</p>
-                    </div>
+                        <FiChevronRight size={20}/>
+                    </a>
+                ))
+                }
 
-                    <FiChevronRight size={20}/>
-                </a>
             </Repositories>
         </>
     )
